@@ -47,4 +47,24 @@ class ApplicationController < ActionController::API
             [lat + vert_angular_distance_of_diags, lng - hor_angular_distance_of_diags],
         ]
     end
+
+    def get_distance(lat1, lng1, lat2, lng2)
+        vert_angle_difference = (lat1 - lat2).abs
+        vert_angle_difference_radians = vert_angle_difference * Math::PI / 180
+        vert_distance = RADIUS_OF_EARTH * vert_angle_difference_radians
+
+        hor_angular_distance = (lng1 - lng2).abs
+        hor_angular_distance_radians = hor_angular_distance * Math::PI / 180
+
+        average_lat = (lat1 + lat2)/ 2
+        average_lat_radians = average_lat * Math::PI / 180
+        radius_at_latitude = RADIUS_OF_EARTH * Math.cos(average_lat_radians)
+        hor_distance = radius_at_latitude * hor_angular_distance_radians
+
+        Math.sqrt(vert_distance**2 + hor_distance**2)
+    end
+
+    def get_closest_points(equidistant_points1, equidistant_points2)
+
+    end
 end
