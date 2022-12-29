@@ -8,10 +8,8 @@ class ApplicationController < ActionController::API
         equidistant_points2 = get_equidistant_points(lat2, lng2, distance2)
         equidistant_points3 = get_equidistant_points(lat3, lng3, distance3)
 
-        closest_points_for_1_and_2 = get_closest_points(equidistant_points1, equidistant_points2)
-        closest_points_for_all_3 = get_closest_points(closest_points_for_1_and_2, equidistant_points3)
-        closest_point = get_midpoint(closest_points_for_all_3[0], closest_points_for_all_3[1])
-
+        closest_3_points = get_closest_of_3_points(equidistant_points1, equidistant_points2, equidistant_points3)
+        closest_point = get_midpoint(closest_3_points[0], closest_3_points[1])
         render json: { closest_point: closest_point }
     end
 
@@ -56,10 +54,10 @@ class ApplicationController < ActionController::API
         vert_angular_distance_of_theta = vert_angular_distance * Math.sin(theta_in_radians)
         hor_angular_distance_of_theta = hor_angular_distance * Math.cos(theta_in_radians)
         [
-            [lat + vert_angular_distance_of_theta, lng + hor_angular_distance_of_thevert_angular_distance_of_theta],
-            [lat - vert_angular_distance_of_theta, lng + hor_angular_distance_of_thevert_angular_distance_of_theta],
-            [lat - vert_angular_distance_of_theta, lng - hor_angular_distance_of_thevert_angular_distance_of_theta],
-            [lat + vert_angular_distance_of_theta, lng - hor_angular_distance_of_thevert_angular_distance_of_theta],
+            [lat + vert_angular_distance_of_theta, lng + hor_angular_distance_of_theta],
+            [lat - vert_angular_distance_of_theta, lng + hor_angular_distance_of_theta],
+            [lat - vert_angular_distance_of_theta, lng - hor_angular_distance_of_theta],
+            [lat + vert_angular_distance_of_theta, lng - hor_angular_distance_of_theta],
         ]
     end
 
@@ -83,17 +81,24 @@ class ApplicationController < ActionController::API
         [(point1[0] + point2[0])/2, (point1[1] + point2[1])/2]
     end
 
-    def get_closest_points(equidistant_points1, equidistant_points2)
-        smallest_distance = 10000
+    def get_closest_of_3_points(equidistant_points1, equidistant_points2, equidistant_points3)
+        smallest_distance = 1000
         closest_points = []
-        equidistant_points1.each do |point1|
+        equidistant_points1.each_with_index do |point1, i|
             equidistant_points2.each do |point2|
-                distance = get_distance(point1[0], point1[1], point2[0], point2[1])
-                if distance < smallest_distance
-                    smallest_distance = distance
-                    closest_points = [point1, point2]
+                equidistant_points3.each do |point3|
+                    distance12 = get_distance(point1[0], point1[1], point2[0], point2[1])
+                    next if distance12 > smallest_distance
+                    distance23 = get_distance(point2[0], point2[1], point3[0], point3[1])
+                    distance13 = get_distance(point1[0], point1[1], point3[0], point3[1])
+                    full_distance = distance12 + distance23 + distance13
+                    if full_distance < smallest_distance
+                        smallest_distance = full_distance
+                        closest_points = [point1, point2, point3]
+                    end
                 end
             end
+            p i
         end
         closest_points
     end
